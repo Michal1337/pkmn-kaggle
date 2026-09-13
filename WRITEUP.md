@@ -22,7 +22,7 @@ That's why I first trained a generalist model that can play almost 5000 decks an
 
 ## State and Action Representations, NN Architecture
 
-As I was planning to use a Transformer neural network, the state and action representations boiled down to "tokenizing" the entire game as well as possible, while not losing out on any information. This proved exceedingly difficult as PTCG is a complex game with a lot of variables and edge cases.
+As I was planning to use a Transformer neural network, the state and action representations boiled down to "tokenizing" the entire game as efficiently as possible, while not losing out on any information. This proved exceedingly difficult as PTCG is a complex game with a lot of variables and edge cases.
 
 ### State Representation
 
@@ -54,7 +54,7 @@ Similarly to the state representation, I encode each possible action, returned b
 
 ### Neural Net Architecture
 
-![Network architecture](nn_architecture.png)
+![Network architecture](https://raw.githubusercontent.com/Michal1337/pkmn-kaggle/main/nn_architecture.png)
 
 Each action in a turn is determined by one forward pass through a 20M parameter transformer model. A single card-embedding table is shared by every stream, so whatever the net learns about a card in one zone transfers to all the others. A nice property of transformers is that without positional embeddings they are order invariant, which is something we want in our model, since the order of cards, for example in hand or on bench, doesn't matter. The location of each card is determined entirely by the "zone" embedding. The value head reads the CLS token. The policy head scores the option tokens plus a `SUBMIT` logit to end the turn.
 
@@ -101,7 +101,7 @@ $$w_d = \frac{1}{\frac{1}{N}\sum_{d'=1}^{N}\cos(v_d, v_{d'})}$$
 
 where $v_d$ is the tf-idf vector of deck $d$, treating each deck as a document and each card as a word. A deck surrounded by many near-copies gets a low weight, a one-of-a-kind build gets a high one. The weights are clipped and normalized into a sampling distribution.
 
-![Archetype share under uniform vs tf-idf sampling](tfidf_sampling.png)
+![Archetype share under uniform vs tf-idf sampling](https://raw.githubusercontent.com/Michal1337/pkmn-kaggle/main/tfidf_sampling.png)
 
 The resulting distribution cut the Dragapult and Alakazam shares roughly in half in favour of the more unique decks. I suspect that there are multiple solutions to this problem. However this one was so simple and elegant that I couldn't resist using it.
 
@@ -109,14 +109,14 @@ The resulting distribution cut the Dragapult and Alakazam shares roughly in half
 
 I evaluated my checkpoints head-to-head against a frozen 3B-step checkpoint from an earlier run, on a fixed list of 1553 strong decks. In general this evaluation was extremely noisy. I suspect this is because of the large variance of starting positions, card draws and the huge diversity of decks.
 
-![Head-to-head progress against the frozen 3B checkpoint](h2h_progress.png)
+![Head-to-head progress against the frozen 3B checkpoint](https://raw.githubusercontent.com/Michal1337/pkmn-kaggle/main/h2h_progress.png)
 
 As a second way of evaluation I used the Kaggle LB. Even small gains on my private eval translated into good progress on the LB. I hit and held rank 1 for multiple days on many occasions. First with Alakazam, later with Mega Lopunny as a counter to the Grimmsnarl wave, and later with Mega Lucario as a counter to Mega Lopunny. Those results confirmed that my agent was improving and could play different decks relatively well.
 
 
 Throughout training I also saved the result of every training game played. This gave me results from about 50M games and let me gauge the strong decks quite well.
 
-![Winrate of the best list per archetype over the training run](matchup_progress.png)
+![Winrate of the best list per archetype over the training run](https://raw.githubusercontent.com/Michal1337/pkmn-kaggle/main/matchup_progress.png)
 
 For basically the entire training run the two outstanding archetypes were Alakazam and Dragapult. I decided that my two final decks would come from these two archetypes.
 
@@ -164,7 +164,7 @@ So instead of finetuning one net against a frozen opponent, I trained two copies
 
 Train the nets in turns, starting with Net A until it improves its WR by 2pp over baseline, then freeze Net A and start to train Net B to recover the lost points, repeat. This process repeated 6 times for Alakazam over 3.06B finetune steps and at least 8 times for Dragapult+Dusknoir over 2.67B finetune steps. Over the course of the finetunes I reduced the learning rate and the entropy coefficient. 
 
-![Finetunes vs the frozen generalist opponent](ft_progress.png)
+![Finetunes vs the frozen generalist opponent](https://raw.githubusercontent.com/Michal1337/pkmn-kaggle/main/ft_progress.png)
 
 The submission agents are Net A checkpoints from both finetunes.
 
@@ -172,7 +172,7 @@ The submission agents are Net A checkpoints from both finetunes.
 
 For the entire post-deadline window my Alakazam performed better than Dragapult+Dusknoir, most of the time hovering a bit above 1200 points at rank 5-13. Unfortunately, in the final 2 days it fell a lot and didn't get enough time to recover. I feel like 12th place undersells its true strength a little bit. Ultimately, my Alakazam agent was still the highest rated Alakazam agent in the competition.
 
-![Final submissions over the last 11 days of evaluation](lb_final_two_weeks.png)
+![Final submissions over the last 11 days of evaluation](https://raw.githubusercontent.com/Michal1337/pkmn-kaggle/main/lb_final_two_weeks.png)
 
 ## Improvements and Lessons Learned
 
