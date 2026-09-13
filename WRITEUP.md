@@ -22,7 +22,7 @@ That's why I first trained a generalist model that can play almost 5000 decks an
 
 ## State and Action Representations, NN Architecture
 
-From the start I was planning to use a Transformer neural network, so the state and action representations boiled down to "tokenizing" the entire game as well as possible, while not losing out on any information. This proved excessively difficult as PTCG is a complex game with a lot of variables and edge cases.
+As I was planning to use a Transformer neural network, the state and action representations boiled down to "tokenizing" the entire game as well as possible, while not losing out on any information. This proved excessively difficult as PTCG is a complex game with a lot of variables and edge cases.
 
 ### State Representation
 
@@ -64,20 +64,20 @@ As this was my first real attempt at self-play with PPO, I relied heavily on the
 
 ### Environment Speedups
 
-The engine is a fast C++ binary, so fortunately no rewrite of such a complex game was necessary. The biggest improvement came from optimising the engine-side observation encoding. The engine returns every game state as a big JSON string, and parsing those in Python dominated collection time. My fix was to skip JSON entirely. I made the engine export observations as a raw binary buffer and moved the whole state encoding into C on top of it. Together with CUDA-graph collection and variable-length attention, self-play ran at about 16.5k steps per second on 4 H200s.
+The biggest improvement came from optimising the engine-side observation encoding. The engine returns every game state as a big JSON, and parsing those in Python dominated collection time. My fix was to skip JSON entirely. I made the engine export observations as a raw binary buffer and moved the whole state encoding into C on top of it. Together with CUDA-graph collection and variable-length attention, self-play ran at about 16.5k steps per second on 4 H200s.
 
 ### Used Decks
 
-I acquired decks from two sources. First, I periodically downloaded the episodes of top players and read each deck straight out of the replay. Second, I scraped competitive human decklists from Limitless, keeping every list that placed top 128 at a major and every grassroots list that made top 8 at least twice. Some of those lists used cards that don't exist in the competition's card set, so instead of dropping the whole deck I swapped such cards for their closest legal replacements. The final pool totaled 4941 decks, 3517 from Kaggle and 1424 from Limitless.
+I acquired decks from two sources. First, I periodically downloaded the episodes of top players and read each deck straight out of the replay. Second, I scraped competitive human decklists from Limitless, keeping every list that placed top 128 at a major and every grassroots list that made top 8 at least twice. The final pool totaled 4941 decks, 3517 from Kaggle and 1424 from Limitless.
 
 ### Training The Generalist
 
-The generalist was trained with self-play PPO on the full deck pool. Opponent decks were drawn with the TF-IDF sampling described in the next section, which keeps the training distribution balanced across archetypes. The run went to about 11B environment steps. Whenever progress plateaued I lowered the learning rate and increased the batch size. I did not use any learning rate schedule. The most important parameters:
+The generalist was trained with self-play PPO on the full deck pool. Opponent decks were drawn with the TF-IDF sampling described in the next section. The run went to about 11B environment steps. Whenever progress plateaued I lowered the learning rate and increased the batch size. I did not use any learning rate schedule. The most important parameters:
 
 ```
 [env]
-num_envs = 768            ; one engine process per battle
-turn_move_limit = 200     ; instant loss for the stalling side
+num_envs = 768
+turn_move_limit = 200
 
 [train]
 total_timesteps = 11_000_000_000
@@ -90,7 +90,7 @@ clip_coef = 0.2
 ent_coef = 0.002
 learning_rate = 1e-4      ; lowered to 5e-5 at ~4B steps and 2.5e-5 at ~9B
 teacher_kl_coef = 0.005
-promote_winrate = 0.53    ; teacher replaced when the learner wins 53% head-to-head
+promote_winrate = 0.53
 ```
 
 #### TF-IDF Sampling
@@ -116,7 +116,7 @@ As a second way of evaluation I used the Kaggle LB. Even small gains on my priva
 
 Throughout training I also saved the result of every training game played. This gave me results from about 50M games and let me gauge the strong decks quite well.
 
-![Piloting winrate per family over the training run](matchup_progress.png)
+![Winrate of the best list per archetype over the training run](matchup_progress.png)
 
 For basically the entire training run the two outstanding archetypes were Alakazam and Dragapult. I decided that my two final decks would come from these two archetypes.
 
@@ -179,5 +179,5 @@ For the entire post-deadline window my Alakazam performed better than Dragapult+
 1. The Alakazam deck selection. I feel like I lost a few precious placements because of Xerosic's Machinations instead of Genesect+tools.
 2. My evaluation was too broad. 1553 decks diluted the signal too much. Fewer, stronger decks would have been a better discriminator.
 3. A fixed learning rate worked better. My initial 3B run failed here, the schedule annealed too early and the run crawled.
-4. Too many tokens per state. The sequence is over 300 tokens and a lot of them are deck, discard cards or UNK tokens. Some convolution or pooling over those zones could cut the compute a lot.
+4. Too many tokens per state. The sequence is over 300 tokens and a lot of them are deck cards, discard cards or UNK tokens. Some convolution or pooling over those zones could cut the compute a lot.
 5. I scaled the model size too early instead of optimising hyperparameters.
