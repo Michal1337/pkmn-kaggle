@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Cython build artifacts (rl/_encfast.pyx is the source; .so/.c are built per-node -- see setup_encfast.py)
+rl/_encfast*.so
+rl/_encfast.c
+.venv/
+venv/
+env/
+
+# Submission artifacts
+submission.tar.gz
+*.tar.gz
+submission_*/
+.mcts*
+
+# Model checkpoints / training runs (regenerable; large)
+*.pt
+*.npz
+pkmn_runs/
+
+# Local run output
+result.html
+*.html
+.probe/
+.smoke*/
+
+# Crash dumps
+*.stackdump
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Kaggle credentials
+kaggle.json
+
+# Proprietary engine dump (downloadable from the Kaggle competition; do not publish)
+_engine/
+
+# Local play/serve assets (checkpoints + deck csvs)
+_play/
+
+# Investigation caches / heavy artifacts
+notes/_replay_cache/
+notes/rl_mcts_sample/
+notes/deck_engine/
+notes/lb_scores.log
+*.pkl
