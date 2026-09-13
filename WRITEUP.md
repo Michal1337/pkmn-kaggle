@@ -22,7 +22,7 @@ That's why I first trained a generalist model that can play almost 5000 decks an
 
 ## State and Action Representations, NN Architecture
 
-As I was planning to use a Transformer neural network, the state and action representations boiled down to "tokenizing" the entire game as well as possible, while not losing out on any information. This proved excessively difficult as PTCG is a complex game with a lot of variables and edge cases.
+As I was planning to use a Transformer neural network, the state and action representations boiled down to "tokenizing" the entire game as well as possible, while not losing out on any information. This proved exceedingly difficult as PTCG is a complex game with a lot of variables and edge cases.
 
 ### State Representation
 
@@ -40,7 +40,7 @@ I represent all game states as a sequence of tokens (cards) in different "zones"
 10. Opponent's discard pile - 60 tokens
 11. One game-state token - 19 scalars (turn, deck/prize/hand counts etc. for both sides)
 
-Each token is the sum of a learned card embedding, a projection of 59 static card features, and a zone embedding. The 59 features cover every card category: card type and stage, energy type, weakness, HP, attack costs etc. Pokemon in play (active + bench) also add embeddings of their pre-evolutions, tools, attached energy cards and damage counters. I have added those static features in hope of faster learning and better generalization to unseen cards. I could have saved one token by merging both stadium zones into one, but decided one saved token is not worth the extra stadium ownership complexity.
+Each token is the sum of a learned card embedding, a projection of 59 static card features, and a zone embedding. The 59 features cover every card category: card type and stage, energy type, weakness, HP, attack costs etc. Pokemon in play (active + bench) also add embeddings of their pre-evolutions, tools, attached energy cards and damage counters. I have added those static features in the hope of faster learning and better generalization to unseen cards. I could have saved one token by merging both stadium zones into one, but decided one saved token is not worth the extra stadium ownership complexity.
 
 ### Action Representation
 
@@ -95,7 +95,7 @@ promote_winrate = 0.53
 
 #### TF-IDF Sampling
 
-For the initial runs I used uniform sampling over the deck pool. This has a nice property of putting more weight on the decks that people experiment on the most, which we can suspect are the strong ones. However, the rarer, more unique decks get undertrained, and that is not what we are looking for in a general model. My solution to this problem was TF-IDF sampling:
+For the initial runs I used uniform sampling over the deck pool. This has a nice property of putting more weight on the decks that people experiment on the most, which we may suspect are the strong ones. However, the rarer, more unique decks get undertrained, and that is not what we are looking for in a general model. My solution to this problem was TF-IDF sampling:
 
 $$w_d = \frac{1}{\frac{1}{N}\sum_{d'=1}^{N}\cos(v_d, v_{d'})}$$
 
@@ -107,7 +107,7 @@ The resulting distribution cut the Dragapult and Alakazam shares roughly in half
 
 ### Evaluation
 
-I evaluated my checkpoints head-to-head against a frozen 3B-step checkpoint from an earlier run, on a fixed list of 1553 strong decks. In general this evaluation was extremely noisy. I suspect because of the large variance of starting positions, card draws and the huge diversity of decks.
+I evaluated my checkpoints head-to-head against a frozen 3B-step checkpoint from an earlier run, on a fixed list of 1553 strong decks. In general this evaluation was extremely noisy. I suspect this is because of the large variance of starting positions, card draws and the huge diversity of decks.
 
 ![Head-to-head progress against the frozen 3B checkpoint](h2h_progress.png)
 
@@ -135,7 +135,7 @@ Stadium (4):     4 Battle Cage
 Energy (7):      4 Telepath Psychic Energy, 1 Enriching Energy, 2 Psychic Energy
 ```
 
-I started from the strongest Alakazam list in my 5000 deck pool and ran small ablations, one or two card swaps at a time, each measured over tens of thousands of games against the matchups I expected to meet on the LB. The biggest win was going up to 4 Battle Cage to counter Dragapult and Grimmsnarl. In hindsight, I think I would replace Xerosic's Machinations, it only mattered in the mirror matchup. I feel like Genesect+tools would probably have been the stronger option, for the additional card draw with Lucky Helmet and the ACE SPEC block.
+I started from the strongest Alakazam list in my 5000-deck pool and ran small ablations, one or two card swaps at a time, each measured over tens of thousands of games against the matchups I expected to meet on the LB. The biggest win was going up to 4 Battle Cage to counter Dragapult and Grimmsnarl. In hindsight, I think I would replace Xerosic's Machinations, it only mattered in the mirror matchup. I feel like Genesect+tools would probably have been the stronger option, for the additional card draw with Lucky Helmet and the ACE SPEC block.
 
 ### Dragapult+Dusknoir
 
@@ -154,7 +154,7 @@ My second pick was more experimental. I focused on bench sniping, Dragapult spre
 
 ## Two-net Finetuning
 
-The generalist diffused its 20M parameters and 50M games over almost 5000 decks. On average this gives only about 20000 games with any single deck, far too little to fight for the top LB spots.
+The generalist diffused its 20M parameters and 50M games over almost 5000 decks. On average this gave only about 20000 games with any single deck, far too little to fight for the top LB spots.
 
 For finetuning my key observation was:
 
@@ -162,7 +162,7 @@ For finetuning my key observation was:
 
 So instead of finetuning one net against a frozen opponent, I trained two copies of the generalist at once. Net A always pilots the ship deck. Net B pilots the opponents, sampled from the meta and the known counter decks. This was quite hard to balance out, in most experiments one side started to dominate and collapsed the training. The design that worked for me was as follows:
 
-Train the nets in turns, starting with Net A until it improves its WR by 2pp over baseline, then freeze net A and start to train net B to recover the lost points, repeat. This process repeated 6 times for Alakazam over 3.06B finetune steps and at least 8 times for Dragapult+Dusknoir over 2.67B finetune steps. Over the course of the finetunes I reduced the learning rate and the entropy coefficient. 
+Train the nets in turns, starting with Net A until it improves its WR by 2pp over baseline, then freeze Net A and start to train Net B to recover the lost points, repeat. This process repeated 6 times for Alakazam over 3.06B finetune steps and at least 8 times for Dragapult+Dusknoir over 2.67B finetune steps. Over the course of the finetunes I reduced the learning rate and the entropy coefficient. 
 
 ![Finetunes vs the frozen generalist opponent](ft_progress.png)
 
